@@ -38,25 +38,39 @@ cd cinema
 
 Movie Service 🎥
 GET /api/movies - получить список всех фильмов
+
 GET /api/movies/{id} - получить информацию о фильме по ID
+
 GET /api/movies/search/title?title={title} - поиск фильмов по названию
+
 GET /api/movies/search/genre?genre={genre} - поиск фильмов по жанру
+
 POST /api/movies - создать новый фильм
+
 PUT /api/movies/{id} - обновить информацию о фильме
+
 DELETE /api/movies/{id} - удалить фильм
 
 User Service 👥
 GET /api/users - получить список всех пользователей
+
 GET /api/users/{id} - получить информацию о пользователе по ID
+
 POST /api/users - создать нового пользователя
+
 PUT /api/users/{id} - обновить информацию о пользователе
+
 DELETE /api/users/{id} - удалить пользователя
 
 Booking Service 🎫
 GET /bookings - получить список всех бронирований
+
 GET /bookings/{id} - получить информацию о бронировании по ID
+
 GET /bookings/user/{userId} - получить бронирования конкретного пользователя
+
 POST /bookings - создать новое бронирование
+
 DELETE /bookings/{bookingId} - отменить бронирование
 
 
