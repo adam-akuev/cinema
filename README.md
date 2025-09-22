@@ -32,8 +32,8 @@ Pet Project — распределенная микросервисная сис
 ### Локальный запуск
 
 1. Клонируйте репозиторий:
-bash
 git clone https://github.com/your-username/cinema.git
+
 cd cinema
 
 Movie Service 🎥
@@ -76,6 +76,9 @@ DELETE /bookings/{bookingId} - отменить бронирование
 
 🔮 Планы по развитию (In Progress 🚧)
 Проект находится в активной разработке. Планируется добавить:
+
 API Gateway (Spring Cloud Gateway) - единая точка входа
+
 Аутентификация и авторизация (Spring Security + JWT)
+
 Асинхронная коммуникация (Apache Kafka)
