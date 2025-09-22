@@ -1,0 +1,12 @@
+example:
+  property: I AM DEV
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    url: jdbc:postgresql://localhost:5432/user_db #For docker localhost = postgres
+    password: ...
+  jpa:
+    hibernate:
+      ddl-auto: update

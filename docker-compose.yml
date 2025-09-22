@@ -1,0 +1,70 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: 0095
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  config-service:
+    container_name: config-service
+    image: cinema/config-server:1.0-SNAPSHOT
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: classpath:/config
+    volumes:
+      - ./config-repo:/config-repo
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  movie-service:
+    container_name: movie-service
+    image: cinema/movie:1.0-SNAPSHOT
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: movie-service
+    networks:
+      - postgres
+    depends_on:
+      - postgres
+      - config-service
+    restart: unless-stopped
+
+
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:

@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: bookingservice
+  profiles:
+    active: dev
+  config:
+    import: optional:configserver:http://localhost:8888 #For docker localhost = config-service
+
+logging:
+  level:
+    org.springframework.web: WARN
+    com.akuev: DEBUG
+
+resilience4j:
+  bulkhead:
+    instances:
+      bulkheadBookingService:
+        maxWaitDuration: 10ms
+        maxConcurrentCalls: 20
+
+  thread-pool-bulkhead:
+    instances:
+      bulkheadBookingServiceThreadPool:
+        maxThreadPoolSize: 5
+        coreThreadPoolSize: 3
+        queueCapacity: 10
+        keepAliveDuration: 100ms
+
+  retry:
+    instances:
+      BookingServiceRetry:
+        maxRetryAttempts: 5
+        waitDuration: 10000
+        retry-exceptions:
+          - java.util.concurrent.TimeoutException
+
+  ratelimiter:
+    instances:
+      BookingServiceTimeout:
+        timeoutDuration: 1000ms
+        limitRefreshPeriod: 5000
+        limitForPeriod: 5
+
+
+  circuitbreaker:
+    instances:
+      movieServiceClient:
+        registerHealthIndicator: true
+        ringBufferSizeInClosedState: 5
+        ringBufferSizeInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        recordExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+
+      userServiceClient:
+        registerHealthIndicator: true
+        ringBufferSizeInClosedState: 6
+        ringBufferSizeInHalfOpenState: 4
+        waitDurationInOpenState: 20s
+        failureRateThreshold: 60
+        recordExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+
+      bookingDatabase:
+        registerHealthIndicator: true
+        ringBufferSizeInClosedState: 10
+        ringBufferSizeInHalfOpenState: 5
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 30
+        recordExceptions:
+          - org.springframework.dao.DataAccessException
+          - java.sql.SQLException
+          - org.hibernate.exception.SQLGrammarException
+          - org.springframework.transaction.TransactionException
