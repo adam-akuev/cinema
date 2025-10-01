@@ -2,7 +2,7 @@ package com.akuev.service;
 
 import com.akuev.model.Movie;
 import com.akuev.repository.MovieRepository;
-import com.akuev.util.MovieNotFoundException;
+import com.akuev.exception.MovieNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

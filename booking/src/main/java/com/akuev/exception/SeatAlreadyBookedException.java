@@ -1,4 +1,4 @@
-package com.akuev.util;
+package com.akuev.exception;
 
 public class SeatAlreadyBookedException extends RuntimeException {
     public SeatAlreadyBookedException(String message) {

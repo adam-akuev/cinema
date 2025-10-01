@@ -11,7 +11,9 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - postgres
+      backend:
+        aliases:
+          - "postgres"
     restart: unless-stopped
 
   pgadmin:
@@ -26,45 +28,71 @@ services:
     ports:
       - "5050:80"
     networks:
-      - postgres
+      backend:
+        aliases:
+          - "pgAdmin"
     restart: unless-stopped
 
-  config-service:
-    container_name: config-service
-    image: cinema/config-server:1.0-SNAPSHOT
-    ports:
-      - "8888:8888"
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    restart: always
     environment:
-      SPRING_PROFILES_ACTIVE: native
-      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: classpath:/config
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: password
     volumes:
-      - ./config-repo:/config-repo
-    networks:
-      - postgres
-    restart: unless-stopped
-
-  movie-service:
-    container_name: movie-service
-    image: cinema/movie:1.0-SNAPSHOT
+      - keycloak_data:/opt/keycloak/data
     ports:
-      - "8081:8081"
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
-      SPRING_APPLICATION_NAME: movie-service
+      - "8080:8080"
     networks:
-      - postgres
+      backend:
+        aliases:
+          - "keycloak"
     depends_on:
       - postgres
-      - config-service
-    restart: unless-stopped
+    command:
+      - start-dev
+
+#  config-service:
+#    container_name: config-service
+#    image: cinema/config-server:1.0-SNAPSHOT
+#    ports:
+#      - "8888:8888"
+#    environment:
+#      SPRING_PROFILES_ACTIVE: native
+#      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: classpath:/config
+#    volumes:
+#      - ./config-repo:/config-repo
+#    networks:
+#      - postgres
+#    restart: unless-stopped
+#
+#  movie-service:
+#    container_name: movie-service
+#    image: cinema/movie:1.0-SNAPSHOT
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      SPRING_PROFILES_ACTIVE: dev
+#      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+#      SPRING_APPLICATION_NAME: movie-service
+#    networks:
+#      - postgres
+#    depends_on:
+#      - postgres
+#      - config-service
+#    restart: unless-stopped
 
 
 
 networks:
-  postgres:
+  backend:
     driver: bridge
 
 volumes:
   postgres:
   pgadmin:
+  keycloak_data:

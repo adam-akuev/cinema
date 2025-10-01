@@ -3,7 +3,7 @@ package com.akuev.service;
 import com.akuev.model.Movie;
 import com.akuev.model.MovieSession;
 import com.akuev.repository.MovieSessionRepository;
-import com.akuev.util.MovieSessionNotFoundException;
+import com.akuev.exception.MovieSessionNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

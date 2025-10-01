@@ -2,7 +2,7 @@ package com.akuev.service;
 
 import com.akuev.model.User;
 import com.akuev.repository.UserRepository;
-import com.akuev.util.UserNotFoundException;
+import com.akuev.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

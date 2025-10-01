@@ -15,6 +15,7 @@
       <module>booking</module>
     <module>config-server</module>
     <module>eurekaserver</module>
+      <module>gatewayserver</module>
   </modules>
 
   <properties>
@@ -24,6 +25,7 @@
     <spring.boot.maven.plugin.version>3.5.4</spring.boot.maven.plugin.version>
     <spring.boot.dependencies.version>3.5.4</spring.boot.dependencies.version>
     <spring-cloud.version>2025.0.0</spring-cloud.version>
+    <keycloak-adapter.version>25.0.2</keycloak-adapter.version>
   </properties>
 
   <dependencyManagement>
@@ -39,6 +41,13 @@
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
         <version>${spring-cloud.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak.bom</groupId>
+        <artifactId>keycloak-adapter-bom</artifactId>
+        <version>${keycloak-adapter.version}</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>

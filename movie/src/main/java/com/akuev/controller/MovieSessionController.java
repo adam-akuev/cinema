@@ -5,8 +5,9 @@ import com.akuev.model.Movie;
 import com.akuev.model.MovieSession;
 import com.akuev.service.MovieService;
 import com.akuev.service.MovieSessionService;
-import com.akuev.util.ErrorResponse;
-import com.akuev.util.MovieSessionNotFoundException;
+import com.akuev.exception.ErrorResponse;
+import com.akuev.exception.MovieSessionNotFoundException;
+import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/movie-sessions")
+@RequestMapping("/api/v1/movie-sessions")
 @RequiredArgsConstructor
 public class MovieSessionController {
     private final MovieSessionService movieSessionService;
@@ -26,27 +27,32 @@ public class MovieSessionController {
     private final ModelMapper modelMapper;
 
     @GetMapping
+    @RolesAllowed({"USER", "ADMIN"})
     public List<MovieSessionDTO> findAll() {
         return movieSessionService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
+    @RolesAllowed({"USER", "ADMIN"})
     public Optional<MovieSessionDTO> findSessionById(@PathVariable("id") Long id) {
         return movieSessionService.findById(id).map(this::convertToDTO);
     }
 
     @GetMapping("/exist/{id}")
+    @RolesAllowed({"ADMIN"})
     public boolean existMovieById(@PathVariable("id") Long id) {
         return movieSessionService.existsById(id);
     }
 
     @GetMapping("/{movieId}/sessions")
+    @RolesAllowed({"USER", "ADMIN"})
     public List<MovieSessionDTO> findSessionsByMovieId(@PathVariable("movieId") Long id) {
         return movieSessionService.findMovieSessions(id).stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RolesAllowed({"ADMIN"})
     public void addSession(@RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
         movieSessionService.create(session);
@@ -61,6 +67,7 @@ public class MovieSessionController {
     }*/
 
     @PutMapping("/{id}")
+    @RolesAllowed({"ADMIN"})
     public void putMovieSession(@PathVariable("id") Long id,
                                 @RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
@@ -69,6 +76,7 @@ public class MovieSessionController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RolesAllowed({"ADMIN"})
     public void deleteById(@PathVariable("id") Long id) {
         movieSessionService.deleteById(id);
     }

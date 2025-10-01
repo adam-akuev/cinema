@@ -1,4 +1,4 @@
-package com.akuev.util;
+package com.akuev.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

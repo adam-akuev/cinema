@@ -1,5 +1,6 @@
 package com.akuev.service;
 
+import com.akuev.exception.*;
 import com.akuev.service.client.MovieFeignClient;
 import com.akuev.service.client.UserFeignClient;
 import com.akuev.dto.MovieSessionResponseDTO;
@@ -7,11 +8,13 @@ import com.akuev.dto.ReserveSeatsRequest;
 import com.akuev.dto.UserDTO;
 import com.akuev.model.Booking;
 import com.akuev.repository.BookingRepository;
-import com.akuev.util.*;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +38,16 @@ public class BookingService {
     @Bulkhead(name = "bulkheadBookingService", fallbackMethod = "getBookingByIdFallback")
     public Optional<Booking> getBookingById(Long id) {
         Optional<Booking> booking = bookingRepository.findById(id);
+        if (booking.isEmpty()) {
+            throw new BookingNotFoundException("Booking with id " + id + " not found!");
+        }
+        return booking;
+    }
+
+    @CircuitBreaker(name = "bookingDatabase", fallbackMethod = "getBookingByIdFallback")
+    @Bulkhead(name = "bulkheadBookingService", fallbackMethod = "getBookingByIdFallback")
+    public Optional<Booking> getBookingByIdAndUserId(Long id, UUID userId) {
+        Optional<Booking> booking = bookingRepository.findByIdAndUserId(id, userId);
         if (booking.isEmpty()) {
             throw new BookingNotFoundException("Booking with id " + id + " not found!");
         }
@@ -111,6 +124,24 @@ public class BookingService {
     public void cancelBooking(Long bookingId) {
         Booking booking = getBookingById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Booking by id " + bookingId + " not found!"));
+
+        ReserveSeatsRequest freeRequest = new ReserveSeatsRequest(booking.getBookedSeats());
+        try {
+            freeBookingSeats(booking.getSessionId(), freeRequest);
+            deleteBookingById(bookingId);
+        } catch (ServiceAccessDeniedException e) {
+            throw new BookingFailedException("Failed to free seats in movie service: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void cancelBookingByUserId(Long bookingId, UUID userId) {
+        Booking booking = getBookingById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking by id " + bookingId + " not found!"));
+
+        if (!bookingRepository.existsByIdAndUserId(bookingId, userId)) {
+            throw new SecurityException("Booking not found or access denied");
+        }
 
         ReserveSeatsRequest freeRequest = new ReserveSeatsRequest(booking.getBookedSeats());
         try {

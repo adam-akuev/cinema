@@ -1,4 +1,4 @@
-package com.akuev.util;
+package com.akuev.exception;
 
 public class BookingFailedException extends RuntimeException {
     public BookingFailedException(String message) {

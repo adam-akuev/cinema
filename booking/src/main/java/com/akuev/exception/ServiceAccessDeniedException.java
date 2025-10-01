@@ -1,4 +1,4 @@
-package com.akuev.util;
+package com.akuev.exception;
 
 public class ServiceAccessDeniedException extends RuntimeException {
     public ServiceAccessDeniedException(String message) {

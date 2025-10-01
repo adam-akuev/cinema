@@ -3,8 +3,9 @@ package com.akuev.controller;
 import com.akuev.dto.MovieDTO;
 import com.akuev.model.Movie;
 import com.akuev.service.MovieService;
-import com.akuev.util.ErrorResponse;
-import com.akuev.util.MovieNotFoundException;
+import com.akuev.exception.ErrorResponse;
+import com.akuev.exception.MovieNotFoundException;
+import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -16,38 +17,44 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/movies")
+@RequestMapping("/api/v1/movies")
 @RequiredArgsConstructor
 public class MovieController {
     private final MovieService movieService;
     private final ModelMapper modelMapper;
 
     @GetMapping
+    @RolesAllowed({"USER", "ADMIN"})
     public List<MovieDTO> findAllMovies() {
         return movieService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
+    @RolesAllowed({"ADMIN"})
     public Optional<MovieDTO> findMovieById(@PathVariable("id") Long id) {
         return movieService.findById(id).map(this::convertToDTO);
     }
 
     @GetMapping("/search/title")
+    @RolesAllowed({"USER", "ADMIN"})
     public List<MovieDTO> findMovieByTitle(@RequestParam("title") String title) {
         return movieService.findByTitle(title).stream().map(this::convertToDTO).toList();
     }
 
     @GetMapping("/search/genre")
+    @RolesAllowed({"USER", "ADMIN"})
     public List<MovieDTO> findMovieByGenre(@RequestParam("genre") String genre) {
         return movieService.findByGenre(genre).stream().map(this::convertToDTO).toList();
     }
 
     @GetMapping("/count")
+    @RolesAllowed({"ADMIN"})
     public long countMovies() {
         return movieService.count();
     }
 
     @GetMapping("/exist/{id}")
+    @RolesAllowed({"ADMIN"})
     public boolean existMovieById(@PathVariable("id") Long id) {
         return movieService.existsById(id);
     }
@@ -64,12 +71,14 @@ public class MovieController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RolesAllowed({"ADMIN"})
     public void addMovie(@RequestBody MovieDTO movieDTO) {
         movieService.create(convertToMovie(movieDTO));
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @RolesAllowed({"ADMIN"})
     public void putMovie(@PathVariable("id") Long id,
                              @RequestBody MovieDTO movieDTO) {
         Movie movie = modelMapper.map(movieDTO, Movie.class);
@@ -78,6 +87,7 @@ public class MovieController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RolesAllowed({"ADMIN"})
     public void deleteMovie(@PathVariable("id") Long id) {
         movieService.deleteById(id);
     }
