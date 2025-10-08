@@ -9,7 +9,7 @@ import java.util.List;
 @Component
 public class FilterUtils {
     public static final String CORRELATION_ID = "cinema-correlation-id";
-    public static final String AUTH_TOKEN     = "cinema-auth-token";
+    public static final String AUTH_TOKEN     = "Authorization";
     public static final String USER_ID        = "cinema-user-id";
     public static final String BOOKING_ID     = "cinema-booking-id";
     public static final String SESSION_ID     = "cinema-session-id";
@@ -20,6 +20,15 @@ public class FilterUtils {
             return null;
         } else {
             List<String> headers = requestHeaders.get(CORRELATION_ID);
+            return headers.stream().findFirst().get();
+        }
+    }
+
+    public String getAuthToken(HttpHeaders requestHeaders) {
+        if (requestHeaders.get(AUTH_TOKEN) == null) {
+            return null;
+        } else {
+            List<String> headers = requestHeaders.get(AUTH_TOKEN);
             return headers.stream().findFirst().get();
         }
     }

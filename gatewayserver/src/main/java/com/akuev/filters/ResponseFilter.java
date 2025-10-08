@@ -1,5 +1,6 @@
 package com.akuev.filters;
 
+import brave.Tracer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
@@ -11,19 +12,25 @@ import reactor.core.publisher.Mono;
 @Configuration
 public class ResponseFilter {
     private final FilterUtils filterUtils;
+    private final Tracer tracer;
 
-    public ResponseFilter(FilterUtils filterUtils) {
+    public ResponseFilter(FilterUtils filterUtils, Tracer tracer) {
         this.filterUtils = filterUtils;
+        this.tracer = tracer;
     }
 
     @Bean
     public GlobalFilter postGlobalFilter() {
         return (exchange, chain) -> {
             return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-                HttpHeaders headers = exchange.getRequest().getHeaders();
-                String correlationId = filterUtils.getCorrelationId(headers);
-                log.debug("Adding the correlation id to the outbound headers. {}", correlationId);
-                exchange.getResponse().getHeaders().add(FilterUtils.CORRELATION_ID, correlationId);
+                if (tracer.currentSpan() != null) {
+                    String traceId = tracer.currentSpan().context().traceIdString();
+                    log.debug("Adding the correlation id to the outbound headers. {}", traceId);
+                    exchange.getResponse().getHeaders().add(FilterUtils.CORRELATION_ID, traceId);
+                } else {
+                    log.warn("This span = null");
+                    exchange.getResponse().getHeaders().add(FilterUtils.CORRELATION_ID, filterUtils.getCorrelationId(new HttpHeaders()));
+                }
                 log.debug("Completing outgoing request for {}.", exchange.getRequest().getURI());
             }
             ));

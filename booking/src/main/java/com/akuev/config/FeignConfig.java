@@ -43,4 +43,13 @@ public class FeignConfig {
             }
         };
     }
+
+    @Bean
+    public RequestInterceptor apiKeyRequestInterceptor() {
+        return template -> {
+            // FIXME Decode this secret and add in config
+            template.header("X-API-Key", "cinema-internal-secret-key-2024");
+            System.out.println("API Key added to Feign request");
+        };
+    }
 }

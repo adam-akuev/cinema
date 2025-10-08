@@ -1,5 +1,7 @@
 package com.akuev.service;
 
+import com.akuev.events.source.ActionEnum;
+import com.akuev.events.source.SimpleSourceBean;
 import com.akuev.model.Movie;
 import com.akuev.model.MovieSession;
 import com.akuev.repository.MovieSessionRepository;
@@ -19,6 +21,7 @@ import java.util.Set;
 public class MovieSessionService {
     private final MovieSessionRepository movieSessionRepository;
     private final MovieService movieService;
+    private final SimpleSourceBean simpleSourceBean;
 
     public List<MovieSession> findAll() {
         return movieSessionRepository.findAll();
@@ -44,19 +47,24 @@ public class MovieSessionService {
     @Transactional
     public void create(MovieSession session) {
         movieSessionRepository.save(session);
+        simpleSourceBean.publishMovieSessionChange(ActionEnum.CREATED, session.getId());
     }
 
     @Transactional
     public MovieSession createForMovie(Long movieId, MovieSession session) {
         Optional<Movie> movie = movieService.findById(movieId);
         session.setMovie(movie.get());
-        return movieSessionRepository.save(session);
+        MovieSession createdSession = movieSessionRepository.save(session);
+        simpleSourceBean.publishMovieSessionChange(ActionEnum.CREATED, session.getId());
+        return createdSession;
     }
 
     @Transactional
     public MovieSession update(Long id, MovieSession session) {
         session.setId(id);
-        return movieSessionRepository.save(session);
+        MovieSession updatedMovie = movieSessionRepository.save(session);
+        simpleSourceBean.publishMovieSessionChange(ActionEnum.UPDATED, session.getId());
+        return updatedMovie;
     }
 
     @Transactional
@@ -98,5 +106,6 @@ public class MovieSessionService {
     @Transactional
     public void deleteById(Long id) {
         movieSessionRepository.deleteById(id);
+        simpleSourceBean.publishMovieSessionChange(ActionEnum.DELETED, id);
     }
 }

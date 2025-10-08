@@ -1,12 +1,12 @@
 package com.akuev.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookingDTO {
     private Long sessionId;
     private Set<String> bookedSeats;

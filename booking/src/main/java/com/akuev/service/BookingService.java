@@ -1,6 +1,8 @@
 package com.akuev.service;
 
 import com.akuev.exception.*;
+import com.akuev.model.MovieSessionRedis;
+import com.akuev.repository.MovieSessionRedisRepository;
 import com.akuev.service.client.MovieFeignClient;
 import com.akuev.service.client.UserFeignClient;
 import com.akuev.dto.MovieSessionResponseDTO;
@@ -12,6 +14,7 @@ import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,13 +23,112 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BookingService {
+    private final MovieSessionRedisRepository movieSessionRedisRepository;
     private final BookingRepository bookingRepository;
     private final MovieFeignClient movieFeignClient;
     private final UserFeignClient userFeignClient;
+
+    // ===== REDIS =====
+    public void cacheMovieSession(MovieSessionResponseDTO sessionDTO) {
+        try {
+            MovieSessionRedis sessionRedis = new MovieSessionRedis(sessionDTO);
+            movieSessionRedisRepository.save(sessionRedis);
+            log.debug("Cached session in Redis: {}", sessionDTO.getId());
+        } catch (Exception e) {
+            log.error("Failed to cache session: {}", sessionDTO.getId(), e);
+        }
+    }
+
+    public Optional<MovieSessionRedis> getCachedSession(Long sessionId) {
+        try {
+            return movieSessionRedisRepository.findById(sessionId);
+        } catch (Exception e) {
+            log.error("Failed to get cached session: {}", sessionId);
+            return Optional.empty();
+        }
+    }
+
+    public void evictCachedSession(Long sessionId) {
+        try {
+            movieSessionRedisRepository.deleteById(sessionId);
+            log.debug("Evicted session from Redis: {}", sessionId);
+        } catch (Exception e) {
+            log.error("Failed to evict session: {}", sessionId, e);
+        }
+    }
+
+    public void syncSessionToCache(Long sessionId) {
+        try {
+            MovieSessionResponseDTO sessionDTO = getSession(sessionId);
+            cacheMovieSession(sessionDTO);
+            log.debug("Synced session to Redis cache: {}", sessionId);
+        } catch (Exception e) {
+            log.error("Failed to sync session to cache: {}", sessionId, e);
+        }
+    }
+
+    @Transactional
+    public void create(UUID userId, Long sessionId, Set<String> seatsForBooking) {
+        log.info("Creating booking for user: {}, session: {}, seats: {}", userId, sessionId, seatsForBooking);
+
+        Optional<MovieSessionRedis> cachedSession = getCachedSession(sessionId);
+        MovieSessionResponseDTO movieSession;
+        UserDTO user;
+
+        if (cachedSession.isPresent()) {
+            for (String seat : seatsForBooking) {
+                if (!cachedSession.get().isSeatAvailable(seat)) {
+                    throw new SeatAlreadyBookedException("Seats already booked in cache: " + seatsForBooking);
+                }
+            }
+
+            user = getUser(userId);
+            movieSession = new MovieSessionResponseDTO(cachedSession.get());
+
+            log.debug("Seats available in cache: {}", seatsForBooking);
+        } else {
+            log.debug("Session in not cache, using Feign");
+            if (!checkSeatsAvailability(sessionId, seatsForBooking)) {
+                throw new SeatAlreadyBookedException("Some seats are already booked: " + seatsForBooking);
+            }
+
+            user = getUser(userId);
+            movieSession = getSession(sessionId);
+        }
+
+        ReserveSeatsRequest request = new ReserveSeatsRequest(seatsForBooking);
+        boolean bookingSuccess = getBookingSeats(sessionId, request);
+
+        if (!bookingSuccess) {
+            throw new BookingFailedException("Failed to book seats in movie service");
+        }
+
+        if (cachedSession.isPresent()) {
+            MovieSessionRedis session = cachedSession.get();
+            for (String seat : seatsForBooking) {
+                session.bookSeat(seat);
+            }
+            movieSessionRedisRepository.save(session);
+            log.debug("Updated cache after booking: {}", seatsForBooking);
+        } else {
+            syncSessionToCache(sessionId);
+        }
+
+        Booking booking = new Booking();
+        booking.setUserId(user.getId());
+        booking.setSessionId(movieSession.getId());
+        booking.setBookedSeats(seatsForBooking);
+        booking.setPaid(true);
+
+        saveBooking(booking);
+    }
+
+    // ===== END =====
 
     @CircuitBreaker(name = "bookingDatabase", fallbackMethod = "getAllBookingsFallback")
     @Bulkhead(name = "bulkheadBookingService", fallbackMethod = "getAllBookingsFallback")
@@ -66,30 +168,30 @@ public class BookingService {
         return availableSeats.containsAll(seats);
     }
 
-    @Transactional
-    public void create(UUID userId, Long sessionId, Set<String> seatsForBooking) {
-        if (!checkSeatsAvailability(sessionId, seatsForBooking)) {
-            throw new SeatAlreadyBookedException("Some seats are already booked: " + seatsForBooking);
-        }
-
-        ReserveSeatsRequest request = new ReserveSeatsRequest(seatsForBooking);
-        boolean bookingSuccess = getBookingSeats(sessionId, request);
-
-        if (!bookingSuccess) {
-            throw new BookingFailedException("Failed to book seats in movie service");
-        }
-
-        UserDTO user = getUser(userId);
-        MovieSessionResponseDTO movieSession = getSession(sessionId);
-
-        Booking booking = new Booking();
-        booking.setUserId(user.getId());
-        booking.setSessionId(movieSession.getId());
-        booking.setBookedSeats(seatsForBooking);
-        booking.setPaid(true);
-
-        saveBooking(booking);
-    }
+//    @Transactional
+//    public void create(UUID userId, Long sessionId, Set<String> seatsForBooking) {
+//        if (!checkSeatsAvailability(sessionId, seatsForBooking)) {
+//            throw new SeatAlreadyBookedException("Some seats are already booked: " + seatsForBooking);
+//        }
+//
+//        ReserveSeatsRequest request = new ReserveSeatsRequest(seatsForBooking);
+//        boolean bookingSuccess = getBookingSeats(sessionId, request);
+//
+//        if (!bookingSuccess) {
+//            throw new BookingFailedException("Failed to book seats in movie service");
+//        }
+//
+//        UserDTO user = getUser(userId);
+//        MovieSessionResponseDTO movieSession = getSession(sessionId);
+//
+//        Booking booking = new Booking();
+//        booking.setUserId(user.getId());
+//        booking.setSessionId(movieSession.getId());
+//        booking.setBookedSeats(seatsForBooking);
+//        booking.setPaid(true);
+//
+//        saveBooking(booking);
+//    }
 
     @CircuitBreaker(name = "movieServiceClient", fallbackMethod = "getBookingSeatsFallback")
     @Bulkhead(name = "bulkheadBookingService", fallbackMethod = "getBookingSeatsFallback")

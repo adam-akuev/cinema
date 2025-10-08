@@ -9,40 +9,40 @@ public class UserContext {
     public static final String USER_ID = "cinema-user-id";
     public static final String BOOKING_ID = "cinema-booking-id";
 
-    private String correlationId = new String();
-    private String authToken = new String();
-    private String userId = new String();
-    private String bookingId = new String();
+    private static final ThreadLocal<String> correlationId = new ThreadLocal<>();
+    private static final ThreadLocal<String> authToken = new ThreadLocal<>();
+    private static final ThreadLocal<String> userId = new ThreadLocal<>();
+    private static final ThreadLocal<String> bookingId = new ThreadLocal<>();
 
-    public String getCorrelationId() {
-        return correlationId;
+    public static String getCorrelationId() {
+        return correlationId.get();
     }
 
-    public void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
+    public static void setCorrelationId(String correlationId) {
+        UserContext.correlationId.set(correlationId);
     }
 
-    public String getAuthToken() {
-        return authToken;
+    public static String getAuthToken() {
+        return authToken.get();
     }
 
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
+    public static void setAuthToken(String authToken) {
+        UserContext.authToken.set(authToken);
     }
 
-    public String getUserId() {
-        return userId;
+    public static String getUserId() {
+        return userId.get();
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public static void setUserId(String userId) {
+        UserContext.userId.set(userId);
     }
 
-    public String getBookingId() {
-        return bookingId;
+    public static String getBookingId() {
+        return bookingId.get();
     }
 
-    public void setBookingId(String bookingId) {
-        this.bookingId = bookingId;
+    public static void setBookingId(String bookingId) {
+        UserContext.bookingId.set(bookingId);
     }
 }

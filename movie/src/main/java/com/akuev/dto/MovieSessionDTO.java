@@ -1,12 +1,12 @@
 package com.akuev.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class MovieSessionDTO {
     private LocalDateTime startTime;
     private int hallNumber;

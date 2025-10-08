@@ -1,6 +1,9 @@
 package com.akuev.filters;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -34,6 +37,12 @@ public class TrackingFilter implements GlobalFilter {
             log.debug("cinema-correlation-id generated in tracking filter: {}", correlationId);
         }
 
+        try {
+            System.out.println("The authentication name from the token is : " + getUsername(requestHeaders));
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
         return chain.filter(exchange);
     }
 
@@ -47,5 +56,31 @@ public class TrackingFilter implements GlobalFilter {
 
     private String generateCorrelationId() {
         return UUID.randomUUID().toString();
+    }
+
+    private String getUsername(HttpHeaders requestHeaders) throws JSONException {
+        String username = "";
+        if (filterUtils.getAuthToken(requestHeaders) != null) {
+            String authToken = filterUtils
+                    .getAuthToken(requestHeaders)
+                    .replace("Bearer ", "");
+            JSONObject jsonObject = decodeJWT(authToken);
+            try {
+                username = jsonObject.getString("preferred_username");
+            } catch (Exception e) {
+                log.debug(e.getMessage());
+            }
+        }
+
+        return username;
+    }
+
+    private JSONObject decodeJWT(String JWTToken) throws JSONException {
+        String[] split_string = JWTToken.split("\\.");
+        String base64EncodedBody = split_string[1];
+        Base64 base64Url = new Base64(true);
+        String body = new String(base64Url.decode(base64EncodedBody));
+        JSONObject jsonObject = new JSONObject(body);
+        return jsonObject;
     }
 }

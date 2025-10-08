@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="application_name" source="spring.application.name"/>
+
+    <!-- Appender для Logstash (TCP) -->
+    <appender name="logstash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:5000</destination>
+
+        <!-- ИСПРАВЛЕНИЕ: используем LoggingEventCompositeJsonEncoder вместо LogstashEncoder -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <loggerName/>
+                <message/>
+                <mdc/> <!-- Включает traceId/spanId -->
+                <stackTrace/>
+                <threadName/>
+                <pattern>
+                    <pattern>
+                        {
+                        "service": "${application_name}",
+                        "type": "application"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+
+        <keepAliveDuration>5 minutes</keepAliveDuration>
+        <reconnectionDelay>1 second</reconnectionDelay>
+    </appender>
+
+    <!-- Appender для консоли с JSON (для разработки) -->
+    <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <loggerName/>
+                <message/>
+                <mdc/> <!-- Включает traceId/spanId -->
+                <stackTrace/>
+                <threadName/>
+                <pattern>
+                    <pattern>
+                        {
+                        "service": "${application_name}",
+                        "type": "application"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="logstash"/>
+        <appender-ref ref="jsonConsole"/>
+    </root>
+
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="com.akuev" level="DEBUG"/>
+    <logger name="org.hibernate" level="WARN"/>
+</configuration>
