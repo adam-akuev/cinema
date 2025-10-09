@@ -20,7 +20,7 @@
 
 ## 🏗️ Архитектура
 
-mermaid
+```mermaid
 graph TB
     CL[Клиенты] --> GW[API Gateway]
     GW --> MS[Микросервисы]
@@ -43,7 +43,11 @@ graph TB
         US --> PG
         BK --> RD[(Redis)]
     end
-<div>
+    
+    subgraph "Мониторинг"
+        MS --> ELK[ELK Stack]
+        MS --> ZP[Zipkin]
+    end
 
 🛠️ Технологический стек
 Backend Services
