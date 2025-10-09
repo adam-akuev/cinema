@@ -20,6 +20,102 @@
 
 ## 🏗️ Архитектура
 
+graph TB
+    %% Клиенты
+    WEB[Web Client]
+    MOB[Mobile App]
+    EXT[External Systems]
+    
+    %% Gateway
+    GW[API Gateway<br/>:8084]
+    
+    %% Security
+    KC[Keycloak<br/>:8080]
+    
+    %% Service Discovery
+    EU[Eureka Server<br/>:8761]
+    
+    %% Business Services
+    MV[Movie Service<br/>:8081]
+    BK[Booking Service<br/>:8083]
+    US[User Service<br/>:8082]
+    
+    %% Message Broker
+    KF[Kafka<br/>:9092]
+    
+    %% Databases
+    PG[(PostgreSQL<br/>:5432)]
+    RD[(Redis<br/>:6379)]
+    
+    %% Monitoring
+    ES[(Elasticsearch<br/>:9200)]
+    KB[Kibana<br/>:5601]
+    ZP[Zipkin<br/>:9411]
+    
+    %% Config
+    CF[Config Server<br/>:8888]
+    
+    %% Connections
+    WEB --> GW
+    MOB --> GW
+    EXT --> GW
+    
+    GW --> KC
+    GW --> EU
+    
+    EU --> MV
+    EU --> BK
+    EU --> US
+    
+    GW --> MV
+    GW --> BK
+    GW --> US
+    
+    MV --> PG
+    BK --> PG
+    US --> PG
+    
+    BK --> RD
+    
+    MV --> KF
+    BK --> KF
+    US --> KF
+    
+    MV --> ES
+    BK --> ES
+    US --> ES
+    GW --> ES
+    
+    ES --> KB
+    MV --> ZP
+    BK --> ZP
+    US --> ZP
+    
+    CF --> EU
+    CF --> GW
+    CF --> MV
+    CF --> BK
+    CF --> US
+    
+    %% Styling
+    classDef client fill:#e1f5fe
+    classDef gateway fill:#f3e5f5
+    classDef security fill:#ffebee
+    classDef service fill:#e8f5e8
+    classDef database fill:#fff3e0
+    classDef message fill:#fce4ec
+    classDef monitoring fill:#e0f2f1
+    classDef config fill:#f1f8e9
+    
+    class WEB,MOB,EXT client
+    class GW gateway
+    class KC security
+    class MV,BK,US service
+    class PG,RD database
+    class KF message
+    class ES,KB,ZP monitoring
+    class CF config
+
 ## 🛠️ Технологический стек
 Backend Services
 Java 17+ + Spring Boot 3.x + Spring Cloud
