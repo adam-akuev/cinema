@@ -20,7 +20,7 @@
 
 ## 🏗️ Архитектура
 
-```mermaid
+mermaid
 graph TB
     CL[Клиенты] --> GW[API Gateway]
     GW --> MS[Микросервисы]
@@ -43,16 +43,8 @@ graph TB
         US --> PG
         BK --> RD[(Redis)]
     end
-    
-    subgraph "Мониторинг"
-        MS --> ELK[ELK Stack]
-        MS --> ZP[Zipkin]
-    end
-    
-    subgraph "Мониторинг"
-        MS --> ELK[ELK Stack]
-        MS --> ZP[Zipkin]
-    end
+<div>
+
 🛠️ Технологический стек
 Backend Services
 Java 17+ + Spring Boot 3.x + Spring Cloud
