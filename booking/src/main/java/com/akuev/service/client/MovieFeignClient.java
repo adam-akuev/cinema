@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
 
-@FeignClient(value = "movieservice", configuration = FeignConfig.class)
+@FeignClient(value = "movie-service", configuration = FeignConfig.class)
 public interface MovieFeignClient {
     @GetMapping("/api/v1/movie-sessions/internal/{id}")
     Optional<MovieSessionResponseDTO> findSessionById(@PathVariable("id") Long id);

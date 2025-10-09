@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -25,38 +24,46 @@ public class MovieController {
 
     @GetMapping
     @RolesAllowed({"USER", "ADMIN"})
-    public List<MovieDTO> findAllMovies() {
-        return movieService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+    public ResponseEntity<List<MovieDTO>> findAllMovies() {
+        List<MovieDTO> movies = movieService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(movies);
     }
 
     @GetMapping("/{id}")
     @RolesAllowed({"ADMIN"})
-    public Optional<MovieDTO> findMovieById(@PathVariable("id") Long id) {
-        return movieService.findById(id).map(this::convertToDTO);
+    public ResponseEntity<MovieDTO> findMovieById(@PathVariable("id") Long id) {
+        return movieService.findById(id)
+                .map(this::convertToDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/search/title")
     @RolesAllowed({"USER", "ADMIN"})
-    public List<MovieDTO> findMovieByTitle(@RequestParam("title") String title) {
-        return movieService.findByTitle(title).stream().map(this::convertToDTO).toList();
+    public ResponseEntity<List<MovieDTO>> findMovieByTitle(@RequestParam("title") String title) {
+        List<MovieDTO> movies = movieService.findByTitle(title).stream().map(this::convertToDTO).toList();
+        return ResponseEntity.ok(movies);
     }
 
     @GetMapping("/search/genre")
     @RolesAllowed({"USER", "ADMIN"})
-    public List<MovieDTO> findMovieByGenre(@RequestParam("genre") String genre) {
-        return movieService.findByGenre(genre).stream().map(this::convertToDTO).toList();
+    public ResponseEntity<List<MovieDTO>> findMovieByGenre(@RequestParam("genre") String genre) {
+        List<MovieDTO> movies = movieService.findByGenre(genre).stream().map(this::convertToDTO).toList();
+        return ResponseEntity.ok(movies);
     }
 
     @GetMapping("/count")
     @RolesAllowed({"ADMIN"})
-    public long countMovies() {
-        return movieService.count();
+    public ResponseEntity<Long> countMovies() {
+        long count = movieService.count();
+        return ResponseEntity.ok(count);
     }
 
     @GetMapping("/exist/{id}")
     @RolesAllowed({"ADMIN"})
-    public boolean existMovieById(@PathVariable("id") Long id) {
-        return movieService.existsById(id);
+    public ResponseEntity<Boolean> existMovieById(@PathVariable("id") Long id) {
+        boolean exists = movieService.existsById(id);
+        return ResponseEntity.ok(exists);
     }
 
     @ExceptionHandler
@@ -70,26 +77,26 @@ public class MovieController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @RolesAllowed({"ADMIN"})
-    public void addMovie(@RequestBody MovieDTO movieDTO) {
+    public ResponseEntity<Void> addMovie(@RequestBody MovieDTO movieDTO) {
         movieService.create(convertToMovie(movieDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     @RolesAllowed({"ADMIN"})
-    public void putMovie(@PathVariable("id") Long id,
-                             @RequestBody MovieDTO movieDTO) {
+    public ResponseEntity<Void> putMovie(@PathVariable("id") Long id,
+                                         @RequestBody MovieDTO movieDTO) {
         Movie movie = modelMapper.map(movieDTO, Movie.class);
         movieService.update(id, movie);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RolesAllowed({"ADMIN"})
-    public void deleteMovie(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteMovie(@PathVariable("id") Long id) {
         movieService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     private Movie convertToMovie(MovieDTO movieDTO) {

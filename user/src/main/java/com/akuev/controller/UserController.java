@@ -7,6 +7,7 @@ import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -25,32 +26,34 @@ public class UserController {
 
     @GetMapping
     @RolesAllowed({"ADMIN"})
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers().stream().map(this::convertToDto).toList();
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers().stream().map(this::convertToDto).toList();
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{id}")
     @RolesAllowed({"USER", "ADMIN"})
-    public Optional<UserDTO> findUserById(@PathVariable("id") UUID id) {
+    public ResponseEntity<UserDTO> findUserById(@PathVariable("id") UUID id) {
         UUID userId = getCurrentUserId();
         if (!hasAdminRole() && !id.equals(userId)) {
             throw new SecurityException("Access denied. You can only view your own profile.");
         }
 
-        return userService.getUserById(id).map(this::convertToDto);
+        Optional<UserDTO> user = userService.getUserById(id).map(this::convertToDto);
+        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = convertToUser(userDTO);
         User createdUser = userService.createUser(user);
-        return convertToDto(createdUser);
+        UserDTO createdUserDTO = convertToDto(createdUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUserDTO);
     }
 
     @PutMapping("/{id}")
     @RolesAllowed({"USER", "ADMIN"})
-    public UserDTO updateUser(@PathVariable UUID id, @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable UUID id, @RequestBody UserDTO userDTO) {
         UUID userId = getCurrentUserId();
         if (!hasAdminRole() && !id.equals(userId)) {
             throw new SecurityException("Access denied. You can only view your own profile.");
@@ -58,14 +61,15 @@ public class UserController {
 
         User newUser = convertToUser(userDTO);
         User updatedUser = userService.updateUser(id, newUser);
-        return convertToDto(updatedUser);
+        UserDTO updatedUserDTO = convertToDto(updatedUser);
+        return ResponseEntity.ok(updatedUserDTO);
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RolesAllowed({"ADMIN"})
-    public void deleteUser(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     private UUID getCurrentUserId() {

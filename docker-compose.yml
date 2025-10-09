@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: postgres
-    image: postgres
+    image: postgres:17
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -18,7 +18,7 @@ services:
 
   pgadmin:
     container_name: pgadmin
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: 0095
@@ -95,7 +95,7 @@ services:
           - "redis"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    image: elasticsearch:7.17.0
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -111,7 +111,7 @@ services:
           - "elasticsearch"
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.0
+    image: kibana:7.17.0
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -125,7 +125,7 @@ services:
           - "kibana"
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.0
+    image: logstash:7.17.0
     container_name: logstash
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
@@ -154,37 +154,108 @@ services:
         aliases:
           - "zipkin"
 
-#  config-service:
-#    container_name: config-service
-#    image: cinema/config-server:1.0-SNAPSHOT
-#    ports:
-#      - "8888:8888"
-#    environment:
-#      SPRING_PROFILES_ACTIVE: native
-#      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: classpath:/config
-#    volumes:
-#      - ./config-repo:/config-repo
-#    networks:
-#      - postgres
-#    restart: unless-stopped
-#
-#  movie-service:
-#    container_name: movie-service
-#    image: cinema/movie:1.0-SNAPSHOT
-#    ports:
-#      - "8081:8081"
-#    environment:
-#      SPRING_PROFILES_ACTIVE: dev
-#      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
-#      SPRING_APPLICATION_NAME: movie-service
-#    networks:
-#      - postgres
-#    depends_on:
-#      - postgres
-#      - config-service
-#    restart: unless-stopped
+  config-service:
+    container_name: config-service
+    image: cinema/config-server:1.0-SNAPSHOT
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      ENCRYPT_KEY: ${ENCRYPT_KEY}
+    networks:
+      - backend
+    restart: unless-stopped
 
+  eureka-server:
+    container_name: eureka-server
+    image: cinema/eureka-server:1.0-SNAPSHOT
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: eureka-server
+    networks:
+      backend:
+        aliases:
+          - "eureka"
+    depends_on:
+      - config-service
+    restart: unless-stopped
 
+  api-gateway:
+    container_name: api-gateway
+    image: cinema/gateway:1.0-SNAPSHOT
+    ports:
+      - "8084:8084"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: gateway-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      backend:
+        aliases:
+          - "gateway"
+    depends_on:
+      - config-service
+      - eureka-server
+    restart: unless-stopped
+
+  movie-service:
+    container_name: movie-service
+    image: cinema/movie:1.0-SNAPSHOT
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: movie-service
+    networks:
+      backend:
+        aliases:
+          - "movie"
+    depends_on:
+      - postgres
+      - config-service
+    restart: unless-stopped
+
+  booking-service:
+    container_name: booking-service
+    image: cinema/booking:1.0-SNAPSHOT
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: booking-service
+    networks:
+      backend:
+        aliases:
+          - "booking"
+    depends_on:
+      - postgres
+      - config-service
+    restart: unless-stopped
+
+  user-service:
+    container_name: user-service
+    image: cinema/user:1.0-SNAPSHOT
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_APPLICATION_NAME: user-service
+    networks:
+      backend:
+        aliases:
+          - "user"
+    depends_on:
+      - postgres
+      - config-service
+    restart: unless-stopped
 
 networks:
   backend:

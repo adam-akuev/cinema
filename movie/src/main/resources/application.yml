@@ -4,4 +4,4 @@ spring:
   profiles:
     active: dev
   config:
-    import: optional:configserver:http://localhost:8888 #For docker localhost = config-service
+    import: optional:configserver:http://config-service:8888 #For docker localhost = config-service

@@ -3,6 +3,8 @@ package com.akuev.config;
 import com.akuev.util.UserContext;
 import com.akuev.util.UserContextHolder;
 import feign.RequestInterceptor;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
@@ -10,6 +12,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @Configuration
+@LoadBalancerClients({
+        @LoadBalancerClient(name = "movie-service"),
+        @LoadBalancerClient(name = "user-service")
+})
 public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {

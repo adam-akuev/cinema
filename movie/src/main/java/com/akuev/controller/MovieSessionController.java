@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -28,57 +27,64 @@ public class MovieSessionController {
 
     @GetMapping
     @RolesAllowed({"USER", "ADMIN"})
-    public List<MovieSessionDTO> findAll() {
-        return movieSessionService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+    public ResponseEntity<List<MovieSessionDTO>> findAll() {
+        List<MovieSessionDTO> sessions = movieSessionService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(sessions);
     }
 
     @GetMapping("/{id}")
     @RolesAllowed({"USER", "ADMIN"})
-    public Optional<MovieSessionDTO> findSessionById(@PathVariable("id") Long id) {
-        return movieSessionService.findById(id).map(this::convertToDTO);
+    public ResponseEntity<MovieSessionDTO> findSessionById(@PathVariable("id") Long id) {
+        return movieSessionService.findById(id)
+                .map(this::convertToDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/exist/{id}")
     @RolesAllowed({"ADMIN"})
-    public boolean existMovieById(@PathVariable("id") Long id) {
-        return movieSessionService.existsById(id);
+    public ResponseEntity<Boolean> existMovieById(@PathVariable("id") Long id) {
+        boolean exists = movieSessionService.existsById(id);
+        return ResponseEntity.ok(exists);
     }
 
     @GetMapping("/{movieId}/sessions")
     @RolesAllowed({"USER", "ADMIN"})
-    public List<MovieSessionDTO> findSessionsByMovieId(@PathVariable("movieId") Long id) {
-        return movieSessionService.findMovieSessions(id).stream().map(this::convertToDTO).collect(Collectors.toList());
+    public ResponseEntity<List<MovieSessionDTO>> findSessionsByMovieId(@PathVariable("movieId") Long id) {
+        List<MovieSessionDTO> sessions = movieSessionService.findMovieSessions(id).stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(sessions);
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @RolesAllowed({"ADMIN"})
-    public void addSession(@RequestBody MovieSessionDTO sessionDTO) {
+    public ResponseEntity<Void> addSession(@RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
         movieSessionService.create(session);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     /*@PostMapping("/movie/{movieId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void addSessionByMovieId(@PathVariable("movieId") Long movieId,
+    public ResponseEntity<Void> addSessionByMovieId(@PathVariable("movieId") Long movieId,
                                     @RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
         movieSessionService.createForMovie(movieId, session);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }*/
 
     @PutMapping("/{id}")
     @RolesAllowed({"ADMIN"})
-    public void putMovieSession(@PathVariable("id") Long id,
-                                @RequestBody MovieSessionDTO sessionDTO) {
+    public ResponseEntity<Void> putMovieSession(@PathVariable("id") Long id,
+                                                @RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
         movieSessionService.update(id, session);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RolesAllowed({"ADMIN"})
-    public void deleteById(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteById(@PathVariable("id") Long id) {
         movieSessionService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler

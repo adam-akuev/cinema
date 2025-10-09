@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -29,40 +30,44 @@ public class BookingController {
 
     @GetMapping
     @RolesAllowed({"ADMIN"})
-    public List<BookingDTO> findAllBookings() {
-        return bookingService.getAllBookings().stream().map(this::convertToDTO).collect(Collectors.toList());
+    public ResponseEntity<List<BookingDTO>> findAllBookings() {
+        List<BookingDTO> bookings = bookingService.getAllBookings().stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("{id}")
     @RolesAllowed({"ADMIN"})
-    public Optional<BookingDTO> findById(@PathVariable("id") Long id) {
-        return bookingService.getBookingById(id).map(this::convertToDTO);
+    public ResponseEntity<BookingDTO> findById(@PathVariable("id") Long id) {
+        Optional<BookingDTO> booking = bookingService.getBookingById(id).map(this::convertToDTO);
+        return booking.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
     @RolesAllowed({"ADMIN"})
-    public List<BookingDTO> findBookingsByUserId(@PathVariable("userId") UUID userId) {
-        return bookingService.findAllByUserId(userId).stream().map(this::convertToDTO).collect(Collectors.toList());
+    public ResponseEntity<List<BookingDTO>> findBookingsByUserId(@PathVariable("userId") UUID userId) {
+        List<BookingDTO> bookings = bookingService.findAllByUserId(userId).stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/my-bookings")
     @RolesAllowed({"USER", "ADMIN"})
-    public List<BookingDTO> findMyBookings() {
+    public ResponseEntity<List<BookingDTO>> findMyBookings() {
         UUID currentUserId = getCurrentUserId();
-        return bookingService.findAllByUserId(currentUserId).stream().map(this::convertToDTO).collect(Collectors.toList());
+        List<BookingDTO> bookings = bookingService.findAllByUserId(currentUserId).stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/my-bookings/{id}")
     @RolesAllowed({"USER", "ADMIN"})
-    public Optional<BookingDTO> findMyBookingById(@PathVariable("id") Long id) {
+    public ResponseEntity<BookingDTO> findMyBookingById(@PathVariable("id") Long id) {
         UUID currentUserId = getCurrentUserId();
-        return bookingService.getBookingByIdAndUserId(id, currentUserId).map(this::convertToDTO);
+        Optional<BookingDTO> booking = bookingService.getBookingByIdAndUserId(id, currentUserId).map(this::convertToDTO);
+        return booking.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @RolesAllowed({"USER", "ADMIN"})
-    public void saveBooking(@RequestBody BookingDTO bookingDTO) {
+    public ResponseEntity<Void> saveBooking(@RequestBody BookingDTO bookingDTO) {
         UUID userId = getCurrentUserId();
 
         log.debug("Save booking request. Correlation id: {}, User: {}, Session: {}",
@@ -77,12 +82,13 @@ public class BookingController {
         log.info("Booking created successfully. User: {}, Session: {}",
                 userId,
                 bookingDTO.getSessionId());
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{bookingId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RolesAllowed({"ADMIN"})
-    public void cancelBooking(@PathVariable("bookingId") Long bookingId) {
+    public ResponseEntity<Void> cancelBooking(@PathVariable("bookingId") Long bookingId) {
         log.debug("Remove booking request. Correlation id: {}, Booking id: {}",
                 UserContextHolder.getContext().getCorrelationId(),
                 bookingId);
@@ -90,12 +96,13 @@ public class BookingController {
         bookingService.cancelBooking(bookingId);
 
         log.info("Booking cancelled successfully. Booking id: {}", bookingId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/my-bookings/{bookingId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RolesAllowed({"USER", "ADMIN"})
-    public void cancelMyBooking(@PathVariable("bookingId") Long bookingId) {
+    public ResponseEntity<Void> cancelMyBooking(@PathVariable("bookingId") Long bookingId) {
         UUID currentUserId = getCurrentUserId();
 
         log.debug("Cancel my booking request. User: {}, Booking id: {}",
@@ -105,6 +112,8 @@ public class BookingController {
 
         log.info("Booking cancelled by user. User: {}, Booking id: {}",
                 currentUserId, bookingId);
+
+        return ResponseEntity.noContent().build();
     }
 
     private UUID getCurrentUserId() {

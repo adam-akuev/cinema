@@ -9,7 +9,7 @@ spring:
       server:
         git:
           uri: https://github.com/adam-akuev/config-repo.git
-          search-paths: movieservice, userservice, bookingservice
+          search-paths: movieservice
           default-label: main
 
 encrypt:
