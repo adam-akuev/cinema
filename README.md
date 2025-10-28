@@ -110,6 +110,7 @@ Docker и Docker Compose
 Keycloak 20+
 
 # Шаг 1: Сборка проекта
+```
 Клонирование репозитория
 
 git clone <repository-url>
@@ -123,20 +124,23 @@ cd movie-service && mvn clean package
 cd ../booking-service && mvn clean package
 
 ... и т.д.
+```
 
 # Шаг 2: Запуск через Docker Compose
+```
 Запуск всей инфраструктуры
-
 docker-compose up -d
 
 Проверка статуса всех сервисов
 
 docker-compose ps
+```
 
 # Шаг 3: Получение токена доступа
+```
 Получение access token через Keycloak
-
 POST http://localhost:8080/realms/cinema/protocol/openid-connect/token
+```
 
 # Шаг 4: Использование API
 📡 API Документация
