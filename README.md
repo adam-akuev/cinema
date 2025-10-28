@@ -110,35 +110,36 @@ Docker и Docker Compose
 Keycloak 20+
 
 # Шаг 1: Сборка проекта
-```
+
 Клонирование репозитория
-
-git clone <repository-url>
-
+```
+git clone https://github.com/adam-akuev/cinema.git
 cd cinema-management
+```
 
 Сборка отдельных сервисов
-
+```
 cd movie-service && mvn clean package
-
 cd ../booking-service && mvn clean package
-
 ... и т.д.
 ```
 
 # Шаг 2: Запуск через Docker Compose
-```
+
 Запуск всей инфраструктуры
+```
 docker-compose up -d
+```
 
 Проверка статуса всех сервисов
-
+```
 docker-compose ps
 ```
 
 # Шаг 3: Получение токена доступа
-```
+
 Получение access token через Keycloak
+```
 POST http://localhost:8080/realms/cinema/protocol/openid-connect/token
 ```
 
@@ -197,7 +198,9 @@ PgAdmin: admin@example.com / 0095
 Локальная разработка
 
 # Запуск только инфраструктуры
+```
 docker-compose up -d postgres redis kafka zookeeper keycloak
+```
 
 📊 Data Flow
 📱 Запрос от клиента → API Gateway (8084)
