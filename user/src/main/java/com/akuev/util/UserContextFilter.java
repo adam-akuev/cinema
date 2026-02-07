@@ -7,11 +7,24 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+/**
+ * Servlet фильтр для инициализации контекста пользователя из HTTP-заголовков.
+ * Извлекает данные из заголовков запроса и сохраняет их в {@link UserContextHolder}.
+ */
 @Slf4j
 @Component
 public class UserContextFilter implements Filter {
+
+    /**
+     * Обрабатывает входящий запрос, извлекая контекстные данные из заголовков.
+     *
+     * @param servletRequest входящий запрос
+     * @param servletResponse исходящий ответ
+     * @param filterChain цепочка фильтров
+     */
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
 
         UserContextHolder.getContext().setCorrelationId(httpServletRequest.getHeader(UserContext.CORRELATION_ID));
