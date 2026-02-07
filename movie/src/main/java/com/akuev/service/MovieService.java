@@ -1,63 +1,82 @@
 package com.akuev.service;
 
 import com.akuev.model.Movie;
-import com.akuev.repository.MovieRepository;
-import com.akuev.exception.MovieNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-@Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class MovieService {
-    private final MovieRepository movieRepository;
+/**
+ * Сервис для работы с фильмами.
+ */
+public interface MovieService {
 
-    public List<Movie> findAll() {
-        return movieRepository.findAll();
-    }
+    /**
+     * Получает список всех фильмов.
+     *
+     * @return список всех фильмов
+     */
+    List<Movie> findAll();
 
-    public Optional<Movie> findById(Long id) {
-        Optional<Movie> movie = movieRepository.findById(id);
+    /**
+     * Находит фильм по его идентификатору.
+     *
+     * @param id идентификатор фильма
+     * @return Optional с найденным фильмом или пустой, если фильм не найден
+     */
+    Optional<Movie> findById(Long id);
 
-        if (movie.isEmpty())
-            throw new MovieNotFoundException();
-        else
-            return movie;
-    }
+    /**
+     * Находит фильмы по названию (поиск по началу названия).
+     *
+     * @param title начало названия фильма для поиска
+     * @return список фильмов, название которых начинается с указанной строки
+     */
+    List<Movie> findByTitle(String title);
 
-    public List<Movie> findByTitle(String title) {
-        return movieRepository.findByTitleStartingWith(title);
-    }
+    /**
+     * Находит фильмы по жанру.
+     *
+     * @param genre жанр фильма
+     * @return список фильмов указанного жанра
+     */
+    List<Movie> findByGenre(String genre);
 
-    public List<Movie> findByGenre(String genre) {
-        return movieRepository.findByGenre(genre);
-    }
+    /**
+     * Проверяет существование фильма по идентификатору.
+     *
+     * @param id идентификатор фильма
+     * @return true, если фильм существует, false - в противном случае
+     */
+    boolean existsById(Long id);
 
-    public boolean existsById(Long id) {
-        return movieRepository.existsById(id);
-    }
+    /**
+     * Возвращает общее количество фильмов.
+     *
+     * @return количество фильмов
+     */
+    long count();
 
-    public long count() {
-        return movieRepository.count();
-    }
+    /**
+     * Создает новый фильм.
+     *
+     * @param movie фильм для создания
+     * @return созданный фильм
+     */
+    Movie create(Movie movie);
 
-    @Transactional
-    public Movie create(Movie movie) {
-        return movieRepository.save(movie);
-    }
+    /**
+     * Обновляет существующий фильм.
+     *
+     * @param id идентификатор фильма для обновления
+     * @param movie данные фильма для обновления
+     * @return обновленный фильм
+     */
+    Movie update(Long id, Movie movie);
 
-    @Transactional
-    public Movie update(Long id, Movie movie) {
-        movie.setId(id);
-        return movieRepository.save(movie);
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        movieRepository.deleteById(id);
-    }
+    /**
+     * Удаляет фильм по идентификатору.
+     *
+     * @param id идентификатор фильма для удаления
+     */
+    void deleteById(Long id);
 }

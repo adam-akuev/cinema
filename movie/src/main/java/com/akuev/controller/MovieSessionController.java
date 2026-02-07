@@ -7,6 +7,13 @@ import com.akuev.service.MovieService;
 import com.akuev.service.MovieSessionService;
 import com.akuev.exception.ErrorResponse;
 import com.akuev.exception.MovieSessionNotFoundException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -20,6 +27,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/movie-sessions")
 @RequiredArgsConstructor
+@Tag(name = "Movie Session Controller", description = "API для управления сеансами фильмов")
+@SecurityRequirement(name = "bearerAuth")
 public class MovieSessionController {
     private final MovieSessionService movieSessionService;
     private final MovieService movieService;
@@ -27,6 +36,8 @@ public class MovieSessionController {
 
     @GetMapping
     @RolesAllowed({"USER", "ADMIN"})
+    @Operation(summary = "Получить все сеансы", description = "Возвращает список всех сеансов фильмов")
+    @ApiResponse(responseCode = "200", description = "Успешно получен список сеансов")
     public ResponseEntity<List<MovieSessionDTO>> findAll() {
         List<MovieSessionDTO> sessions = movieSessionService.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(sessions);
@@ -34,6 +45,12 @@ public class MovieSessionController {
 
     @GetMapping("/{id}")
     @RolesAllowed({"USER", "ADMIN"})
+    @Operation(summary = "Найти сеанс по ID", description = "Возвращает сеанс по указанному идентификатору")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Сеанс найден"),
+            @ApiResponse(responseCode = "404", description = "Сеанс не найден",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<MovieSessionDTO> findSessionById(@PathVariable("id") Long id) {
         return movieSessionService.findById(id)
                 .map(this::convertToDTO)
@@ -43,6 +60,8 @@ public class MovieSessionController {
 
     @GetMapping("/exist/{id}")
     @RolesAllowed({"ADMIN"})
+    @Operation(summary = "Проверить существование сеанса", description = "Проверяет, существует ли сеанс с указанным ID")
+    @ApiResponse(responseCode = "200", description = "Успешно проверено")
     public ResponseEntity<Boolean> existMovieById(@PathVariable("id") Long id) {
         boolean exists = movieSessionService.existsById(id);
         return ResponseEntity.ok(exists);
@@ -50,6 +69,8 @@ public class MovieSessionController {
 
     @GetMapping("/{movieId}/sessions")
     @RolesAllowed({"USER", "ADMIN"})
+    @Operation(summary = "Получить сеансы по фильму", description = "Возвращает список сеансов для указанного фильма")
+    @ApiResponse(responseCode = "200", description = "Успешно получен список сеансов")
     public ResponseEntity<List<MovieSessionDTO>> findSessionsByMovieId(@PathVariable("movieId") Long id) {
         List<MovieSessionDTO> sessions = movieSessionService.findMovieSessions(id).stream().map(this::convertToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(sessions);
@@ -57,6 +78,11 @@ public class MovieSessionController {
 
     @PostMapping
     @RolesAllowed({"ADMIN"})
+    @Operation(summary = "Добавить сеанс", description = "Создает новый сеанс фильма")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Сеанс успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
+    })
     public ResponseEntity<Void> addSession(@RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
         movieSessionService.create(session);
@@ -73,6 +99,11 @@ public class MovieSessionController {
 
     @PutMapping("/{id}")
     @RolesAllowed({"ADMIN"})
+    @Operation(summary = "Обновить сеанс", description = "Обновляет существующий сеанс")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Сеанс успешно обновлен"),
+            @ApiResponse(responseCode = "404", description = "Сеанс не найден")
+    })
     public ResponseEntity<Void> putMovieSession(@PathVariable("id") Long id,
                                                 @RequestBody MovieSessionDTO sessionDTO) {
         MovieSession session = convertToMovieSession(sessionDTO);
@@ -82,6 +113,11 @@ public class MovieSessionController {
 
     @DeleteMapping("/{id}")
     @RolesAllowed({"ADMIN"})
+    @Operation(summary = "Удалить сеанс", description = "Удаляет сеанс по ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Сеанс успешно удален"),
+            @ApiResponse(responseCode = "404", description = "Сеанс не найден")
+    })
     public ResponseEntity<Void> deleteById(@PathVariable("id") Long id) {
         movieSessionService.deleteById(id);
         return ResponseEntity.noContent().build();
