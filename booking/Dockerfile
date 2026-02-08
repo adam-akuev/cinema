@@ -1,4 +1,4 @@
-FROM openjdk:22-slim
+FROM openjdk:22-jdk-slim
 
 LABEL maintainer="Adam Akuev <akuev2005@mail.ru"
 
