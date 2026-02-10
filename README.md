@@ -155,29 +155,6 @@ POST http://localhost:8080/realms/cinema/protocol/openid-connect/token
 
 POST /realms/cinema/protocol/openid-connect/token                     // Получение access token для доступа к API.
 
-## 🎥 Movie Service
-GET	/api/v1/movies	Список фильмов	USER
-
-GET	/api/v1/movies/{id}	Информация о фильме	USER
-
-POST	/api/v1/movies	Добавление фильма	ADMIN
-
-PUT	/api/v1/movies/{id}	Обновление фильма	ADMIN
-
-## 🎫 Booking Service
-GET	/api/v1/bookings	Список бронирований	USER
-
-POST	/api/v1/bookings	Создание бронирования	USER
-
-DELETE	/api/v1/bookings/{id}	Отмена бронирования	USER
-
-## 👥 User Service
-GET	/api/v1/users/{id}	Информация о пользователе	USER
-
-PUT	/api/v1/users	Обновление пользователя	USER
-
-GET	/api/v1/users	Список пользователей	ADMIN
-
 ## 🌐 Доступ к сервисам
 После запуска системы доступны следующие интерфейсы:
 
