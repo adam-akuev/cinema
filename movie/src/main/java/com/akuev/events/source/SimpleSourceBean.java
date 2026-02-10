@@ -6,15 +6,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Component;
 
+/**
+ * Компонент для отправки событий изменений сеансов фильмов в Kafka.
+ */
 @Component
 @Slf4j
 public class SimpleSourceBean {
     private final StreamBridge streamBridge;
 
+    /**
+     * Конструктор с внедрением зависимости StreamBridge.
+     *
+     * @param streamBridge мост для отправки сообщений в поток
+     */
     public SimpleSourceBean(StreamBridge streamBridge) {
         this.streamBridge = streamBridge;
     }
 
+    /**
+     * Отправляет событие изменения сеанса фильма в Kafka.
+     *
+     * @param action тип действия (создание, обновление, удаление)
+     * @param sessionId идентификатор сеанса фильма
+     */
     public void publishMovieSessionChange(ActionEnum action, Long sessionId) {
         log.debug("Sending Kafka message {} for Movie Session Id: {}", action, sessionId);
 

@@ -20,17 +20,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Конфигурация Spring Security для приложения.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(jsr250Enabled = true)
 public class SecurityConfig {
+
+    /**
+     * Создает цепочку фильтров безопасности для HTTP-запросов.
+     *
+     * @param http объект для настройки безопасности HTTP
+     * @return настроенная цепочка фильтров безопасности
+     * @throws Exception если возникла ошибка при настройке
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/v1/movie-sessions/internal/**").access(apiKeyAuthorizationManager())
+                        .requestMatchers("/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**").permitAll()
+                        .requestMatchers("/api/v1/movie-sessions/internal/**")
+                        .access(apiKeyAuthorizationManager())
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -38,6 +55,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Создает менеджер авторизации для проверки API-ключей.
+     *
+     * @return менеджер авторизации для проверки API-ключей
+     */
     @Bean
     public AuthorizationManager<RequestAuthorizationContext> apiKeyAuthorizationManager() {
         return (authentication, context) -> {
@@ -56,6 +78,11 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Создает конвертер для аутентификации JWT.
+     *
+     * @return конвертер JWT аутентификации
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

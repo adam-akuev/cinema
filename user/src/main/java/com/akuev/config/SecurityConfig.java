@@ -15,16 +15,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Конфигурация безопасности приложения.
+ * Настраивает OAuth2 Resource Server с JWT и извлечение ролей из Keycloak.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(jsr250Enabled = true)
 public class SecurityConfig {
+
+    /**
+     * Настраивает цепочку фильтров безопасности.
+     *
+     * @param http объект для настройки безопасности
+     * @return сконфигурированная цепочка фильтров
+     * @throws Exception если произошла ошибка
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -32,6 +49,12 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Создает конвертер JWT для извлечения ролей из Keycloak токена.
+     * Роли извлекаются из resource_access.akuev-cinema.roles.
+     *
+     * @return конвертер JWT аутентификации
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
