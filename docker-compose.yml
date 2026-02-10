@@ -156,7 +156,7 @@ services:
 
   config-service:
     container_name: config-service
-    image: cinema/config-server:1.0-SNAPSHOT
+    image: adam0095/cinema-app:config-server
     ports:
       - "8888:8888"
     environment:
@@ -168,7 +168,7 @@ services:
 
   eureka-server:
     container_name: eureka-server
-    image: cinema/eureka-server:1.0-SNAPSHOT
+    image: adam0095/cinema-app:eureka-server
     ports:
       - "8761:8761"
     environment:
@@ -185,10 +185,9 @@ services:
 
   api-gateway:
     container_name: api-gateway
-    image: cinema/gateway:1.0-SNAPSHOT
+    image: adam0095/cinema-app:gateway
     ports:
       - "8084:8084"
-
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_CLOUD_CONFIG_URI: http://config-service:8888
@@ -205,7 +204,7 @@ services:
 
   movie-service:
     container_name: movie-service
-    image: cinema/movie:1.0-SNAPSHOT
+    image: adam0095/cinema-app:movie-service
     ports:
       - "8081:8081"
     environment:
@@ -223,7 +222,7 @@ services:
 
   booking-service:
     container_name: booking-service
-    image: cinema/booking:1.0-SNAPSHOT
+    image: adam0095/cinema-app:booking-service
     ports:
       - "8083:8083"
     environment:
@@ -241,7 +240,7 @@ services:
 
   user-service:
     container_name: user-service
-    image: cinema/user:1.0-SNAPSHOT
+    image: adam0095/cinema-app:user-service
     ports:
       - "8082:8082"
     environment:

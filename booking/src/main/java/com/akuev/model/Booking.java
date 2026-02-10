@@ -22,15 +22,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /*@ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;*/
     private UUID userId;
 
-    /*
-    @ManyToOne
-    @JoinColumn(name = "session_id", referencedColumnName = "session_id")
-    private MovieSession session;*/
     private Long sessionId;
 
     @Column(name = "seats", columnDefinition = "TEXT[]")

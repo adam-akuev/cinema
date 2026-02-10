@@ -2,30 +2,41 @@ package com.akuev.config;
 
 import com.akuev.event.model.ActionEnum;
 import com.akuev.event.model.MovieSessionChangeModel;
-import com.akuev.service.BookingService;
+import com.akuev.service.BookingCacheService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.function.Consumer;
 
+/**
+ * Конфигурационный класс для сервиса бронирования.
+ * Настраивает обработку событий изменений сеансов фильмов из Kafka.
+ */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class BookingConfig {
+    private final BookingCacheService bookingCacheService;
 
-    private final BookingService bookingService;
-
-    public BookingConfig(BookingService bookingService) {
-        this.bookingService = bookingService;
-    }
-
+    /**
+     * Создает и настраивает экземпляр ModelMapper для преобразования объектов.
+     *
+     * @return настроенный экземпляр ModelMapper
+     */
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();
     }
 
+    /**
+     * Создает consumer для обработки событий изменений сеансов фильмов из Kafka.
+     * События обрабатываются в соответствии с типом действия (создание, обновление, удаление).
+     *
+     * @return consumer для обработки событий MovieSessionChangeModel
+     */
     @Bean
     public Consumer<MovieSessionChangeModel> input() {
         return orgChange -> {
@@ -34,15 +45,18 @@ public class BookingConfig {
             try {
                 switch (ActionEnum.valueOf(orgChange.getAction())) {
                     case CREATED:
-                        bookingService.syncSessionToCache(orgChange.getSessionId());
+                        // Синхронизация нового сеанса в кэше
+                        bookingCacheService.syncSessionToCache(orgChange.getSessionId());
                         log.info("Cached new session: {}", orgChange.getSessionId());
                         break;
                     case UPDATED:
-                        bookingService.syncSessionToCache(orgChange.getSessionId());
+                        // Обновление кэша для измененного сеанса
+                        bookingCacheService.syncSessionToCache(orgChange.getSessionId());
                         log.info("Refreshed cache for updated session: {}", orgChange.getSessionId());
                         break;
                     case DELETED:
-                        bookingService.evictCachedSession(orgChange.getSessionId());
+                        // Удаление сеанса из кэша
+                        bookingCacheService.evictCachedSession(orgChange.getSessionId());
                         log.info("Evicted deleted session from cache: {}", orgChange.getSessionId());
                         break;
                 }
@@ -51,5 +65,4 @@ public class BookingConfig {
             }
         };
     }
-
 }

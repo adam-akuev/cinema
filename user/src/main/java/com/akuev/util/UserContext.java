@@ -2,11 +2,22 @@ package com.akuev.util;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * Хранилище контекстных данных пользователя в рамках запроса.
+ * Содержит идентификаторы и токены для трассировки запросов.
+ */
 @Component
 public class UserContext {
+    /** Имя HTTP-заголовка для ID корреляции запроса. */
     public static final String CORRELATION_ID = "cinema-correlation-id";
+
+    /** Имя HTTP-заголовка для токена аутентификации. */
     public static final String AUTH_TOKEN = "cinema-auth-token";
+
+    /** Имя HTTP-заголовка для ID пользователя. */
     public static final String USER_ID = "cinema-user-id";
+
+    /** Имя HTTP-заголовка для ID бронирования. */
     public static final String BOOKING_ID = "cinema-booking-id";
 
     private String correlationId = new String();

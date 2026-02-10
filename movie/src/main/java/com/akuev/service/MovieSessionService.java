@@ -1,111 +1,93 @@
 package com.akuev.service;
 
-import com.akuev.events.source.ActionEnum;
-import com.akuev.events.source.SimpleSourceBean;
-import com.akuev.model.Movie;
 import com.akuev.model.MovieSession;
-import com.akuev.repository.MovieSessionRepository;
-import com.akuev.exception.MovieSessionNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-@Service
-@Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class MovieSessionService {
-    private final MovieSessionRepository movieSessionRepository;
-    private final MovieService movieService;
-    private final SimpleSourceBean simpleSourceBean;
+/**
+ * Сервис для работы с сеансами фильмов.
+ */
+public interface MovieSessionService {
 
-    public List<MovieSession> findAll() {
-        return movieSessionRepository.findAll();
-    }
+    /**
+     * Получает список всех сеансов.
+     *
+     * @return список всех сеансов
+     */
+    List<MovieSession> findAll();
 
-    public Optional<MovieSession> findById(Long id) {
-        Optional<MovieSession> session = movieSessionRepository.findById(id);
+    /**
+     * Находит сеанс по его идентификатору.
+     *
+     * @param id идентификатор сеанса
+     * @return Optional с найденным сеансом или пустой, если сеанс не найден
+     */
+    Optional<MovieSession> findById(Long id);
 
-        if (session.isEmpty())
-            throw new MovieSessionNotFoundException();
-        else
-            return session;
-    }
+    /**
+     * Находит все сеансы для указанного фильма.
+     *
+     * @param id идентификатор фильма
+     * @return список сеансов для указанного фильма
+     */
+    List<MovieSession> findMovieSessions(Long id);
 
-    public List<MovieSession> findMovieSessions(Long id) {
-        return movieSessionRepository.findByMovieId(id);
-    }
+    /**
+     * Проверяет существование сеанса по идентификатору.
+     *
+     * @param id идентификатор сеанса
+     * @return true, если сеанс существует, false - в противном случае
+     */
+    boolean existsById(Long id);
 
-    public boolean existsById(Long id) {
-        return movieSessionRepository.existsById(id);
-    }
+    /**
+     * Создает новый сеанс.
+     *
+     * @param session сеанс для создания
+     */
+    void create(MovieSession session);
 
-    @Transactional
-    public void create(MovieSession session) {
-        movieSessionRepository.save(session);
-        simpleSourceBean.publishMovieSessionChange(ActionEnum.CREATED, session.getId());
-    }
+    /**
+     * Создает новый сеанс для указанного фильма.
+     *
+     * @param movieId идентификатор фильма
+     * @param session сеанс для создания
+     * @return созданный сеанс
+     */
+    MovieSession createForMovie(Long movieId, MovieSession session);
 
-    @Transactional
-    public MovieSession createForMovie(Long movieId, MovieSession session) {
-        Optional<Movie> movie = movieService.findById(movieId);
-        session.setMovie(movie.get());
-        MovieSession createdSession = movieSessionRepository.save(session);
-        simpleSourceBean.publishMovieSessionChange(ActionEnum.CREATED, session.getId());
-        return createdSession;
-    }
+    /**
+     * Обновляет существующий сеанс.
+     *
+     * @param id идентификатор сеанса для обновления
+     * @param session данные сеанса для обновления
+     * @return обновленный сеанс
+     */
+    MovieSession update(Long id, MovieSession session);
 
-    @Transactional
-    public MovieSession update(Long id, MovieSession session) {
-        session.setId(id);
-        MovieSession updatedMovie = movieSessionRepository.save(session);
-        simpleSourceBean.publishMovieSessionChange(ActionEnum.UPDATED, session.getId());
-        return updatedMovie;
-    }
+    /**
+     * Бронирует места на сеансе.
+     *
+     * @param sessionId идентификатор сеанса
+     * @param seatsForBooking набор мест для бронирования
+     * @return true, если бронирование успешно, false - если места уже заняты
+     */
+    boolean bookingSeats(Long sessionId, Set<String> seatsForBooking);
 
-    @Transactional
-    public boolean bookingSeats(Long sessionId, Set<String> seatsForBooking) {
-        MovieSession session = findById(sessionId).get();
+    /**
+     * Освобождает забронированные места на сеансе.
+     *
+     * @param sessionId идентификатор сеанса
+     * @param seatsForFree набор мест для освобождения
+     */
+    void freeBookingSeats(Long sessionId, Set<String> seatsForFree);
 
-        if (session.getAvailableSeats() == null) {
-            session.setAvailableSeats(new HashSet<>());
-        }
-        if (session.getBookedSeats() == null) {
-            session.setBookedSeats(new HashSet<>());
-        }
-
-        if (session.getAvailableSeats().containsAll(seatsForBooking)) {
-            session.getAvailableSeats().removeAll(seatsForBooking);
-            session.getBookedSeats().addAll(seatsForBooking);
-            movieSessionRepository.save(session);
-            return true;
-        }
-        return false;
-    }
-
-    @Transactional
-    public void freeBookingSeats(Long sessionId, Set<String> seatsForFree) {
-        MovieSession session = findById(sessionId).get();
-
-        if (session.getAvailableSeats() == null) {
-            session.setAvailableSeats(new HashSet<>());
-        }
-        if (session.getBookedSeats() == null) {
-            session.setBookedSeats(new HashSet<>());
-        }
-
-        session.getBookedSeats().removeAll(seatsForFree);
-        session.getAvailableSeats().addAll(seatsForFree);
-        movieSessionRepository.save(session);
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        movieSessionRepository.deleteById(id);
-        simpleSourceBean.publishMovieSessionChange(ActionEnum.DELETED, id);
-    }
+    /**
+     * Удаляет сеанс по идентификатору.
+     *
+     * @param id идентификатор сеанса для удаления
+     */
+    void deleteById(Long id);
 }
