@@ -145,7 +145,11 @@ POST http://localhost:8080/realms/cinema/protocol/openid-connect/token
 
 # Шаг 4: Использование API
 📡 API Документация
-
+Доступ к Swagger UI
+Сервис	Swagger UI URL	OpenAPI JSON
+Movie Service	http://localhost:8081/swagger-ui.html	http://localhost:8081/v3/api-docs
+Booking Service	http://localhost:8083/swagger-ui.html	http://localhost:8083/v3/api-docs
+User Service	http://localhost:8082/swagger-ui.html	http://localhost:8082/v3/api-docs
 🔐 Аутентификация
 
 POST /realms/cinema/protocol/openid-connect/token                     // Получение access token для доступа к API.
